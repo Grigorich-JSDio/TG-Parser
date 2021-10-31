@@ -153,7 +153,6 @@ async def check_chat(chat, type_link):
                     else:
                         user['scam'] = 'True'
                     users.append(user)
-                print(channel_type)
                 if channel_type != 'Каналы':
                     channel_title = ch.title
                 return members, admins, ch, users, channel_type, channel_title
