@@ -3,7 +3,6 @@ import config
 from telethon.sync import TelegramClient
 from telethon.tl.types import ChannelParticipantsAdmins
 from telethon import functions, errors
-from progress.spinner import Spinner
 
 api_id = config.api_id
 api_hash = config.api_hash
