@@ -1,2 +1,2 @@
-telethon==1.22.0
+telethon==1.24.0
 xlwt==1.3.0
