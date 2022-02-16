@@ -1,9 +1,10 @@
 import re
+import time
+import string
 import config
 from telethon.sync import TelegramClient
-from telethon.tl.types import ChannelParticipantsAdmins
+from telethon.tl.types import ChannelParticipantsAdmins, ChannelParticipantsSearch
 from telethon import functions, errors
-
 api_id = config.api_id
 api_hash = config.api_hash
 session = 'session.session'
@@ -70,12 +71,9 @@ async def check_chat(chat, type_link):
                         ch = await client.get_entity(res.chats[1])
                 count_members = await client(functions.channels.GetFullChannelRequest(channel=ch))
                 count_members = count_members.full_chat.participants_count
-                if count_members > 10000:
-                    print(f'Количество участников чата "{ch.title}" насчитывает более 10 тысяч человек. Выбран "обычный" + "агрессивный" режим.')
+                aggressive = False
+                if count_members > 5000:
                     aggressive = True
-                else:
-                    print(f'Количество участников чата "{ch.title}" насчитывает менее 10 тысяч человек. Выбран "обычный" режим.')
-                    aggressive = False
                 admins = []
                 titles = {}
                 async for user in client.iter_participants(ch, filter=ChannelParticipantsAdmins):
@@ -86,18 +84,46 @@ async def check_chat(chat, type_link):
                     admins = None
                 else:
                     admins = list_users(admins, titles)
-                members = await client.get_participants(ch, aggressive=False)
+                m = 1
+                print('Выполняется стандартный парсинг...')
+                members = []
+                if not aggressive:
+                    async for user in client.iter_participants(ch):
+                        members.append(user)
+                else:
+                    ids = []
+                    try:
+                        async for user in client.iter_participants(ch):
+                            if m % 200 == 0:
+                                time.sleep(1)
+                            members.append(user)
+                            ids.append(user.id)
+                            m += 1
+                    except Exception as e:
+                        if str(e) == "'ChannelParticipants' object is not subscriptable":
+                            pass
+                    print('Внимание! Следующая операция занимает продолжительное время: 15 минут для чата в 100 тысяч пользователей. '
+                          'Мы в процессе оптимизации.')
+
+                    for num, x in enumerate(string.ascii_lowercase):
+                        print(f'\rВыполняется расширенный поиск по алфавиту... {num}/{len(string.ascii_lowercase)} ', end='')
+                        m = 1
+                        try:
+                            async for user in client.iter_participants(ch, filter=ChannelParticipantsSearch(x)):
+                                if m % 200 == 0:
+                                    time.sleep(1)
+                                if user.id in ids:
+                                    continue
+                                members.append(user)
+                                ids.append(user.id)
+                                m += 1
+                        except Exception as e:
+                            if str(e) == "'ChannelParticipants' object is not subscriptable":
+                                continue
                 if len(members) == 0:
                     members = None
                 else:
                     members = list_users(members)
-                if aggressive is True:
-                    ag_members = await client.get_participants(ch, aggressive=True)
-                    if len(ag_members) == 0:
-                        ag_members = None
-                    else:
-                        ag_members = list_users(ag_members)
-                    members = {**members, **ag_members}
                 if channel_type == 'Каналы':
                     limit = 3000
                     print(
@@ -154,7 +180,9 @@ async def check_chat(chat, type_link):
                     users.append(user)
                 if channel_type != 'Каналы':
                     channel_title = ch.title
-                return members, admins, ch, users, channel_type, channel_title
+                return {'status': 'ok', 'members': members, 'admins': admins,
+                        'ch': ch, 'users': users, 'channel_type': channel_type,
+                        'channel_title': channel_title}
             else:
                 print('Вы ввели ссылку, которая не ведёт на открытую группу. Попробуйте другую.')
                 return False
@@ -167,7 +195,13 @@ async def dump_messages(chat, title):
     async with TelegramClient(session, api_id, api_hash) as client:
         with open(f'../Чаты/{title}/Сообщения {title}.txt', 'w', encoding='utf8') as file:
             with open(f'../Чаты/{title}/Сообщения {title}.html', 'w', encoding='utf8') as f:
+                n = 0
+                print(f'\n')
                 async for message in client.iter_messages(chat):
+                    n += 1
+                    if n == 100:
+                        print(f'\rID текущего сообщения: {message.id} ', end='')
+                        n = 0
                     file.write(f'{message}\n')
                     if message.media is not None:
                         f.write(
@@ -215,4 +249,3 @@ def list_users(*args):
         for key, value in titles.items():
             users[key]['title'] = value
     return users
-
