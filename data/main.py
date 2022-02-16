@@ -1,7 +1,6 @@
 import json
 from xlwt import Workbook
 import xlwt
-import config
 import os
 import asyncio
 from my_functions import *
@@ -12,48 +11,56 @@ api_hash = config.api_hash
 session = 'session.session'
 loop = asyncio.get_event_loop()
 
-try:
-    # Получаем чат пользователя, проверяем, что за ссылку он отправил и ожидаем правильной ссылки
-    while True:
-        link = input('Введите ссылку на чат: ')
-        # link = ('osint_flood')
-        res = check_link(link)
-        if not res:
-            print('Неверная ссылка. Попробуйте другую.')
-        elif res == 'url' or res == 'id':
-            if res == 'id':
-                res = loop.run_until_complete(check_chat(link, 'id'))
-            else:
-                res = loop.run_until_complete(check_chat(link, 'url'))
-            if res is not False:
-                members = res[0]
-                admins = res[1]
-                chat = res[2]
-                users = res[3]
-                channel_type = res[4]
-                channel_title = res[5]
-                break
-        elif res == 'close':
-            chat = loop.run_until_complete(inv_chat(link))
-            res = loop.run_until_complete(check_chat(chat, 'url'))
-            if res is not False:
-                members = res[0]
-                admins = res[1]
-                chat = res[2]
-                users = res[3]
-                channel_type = 'Чаты'
-                channel_title = chat.title
-                break
-    title = channel_title
-    for x in ['\\', '|', '"', '/', ':',
-            '?', '*', '<', '>']:
-        title = title.replace(x, ' ')
-    if os.path.exists(f'../Чаты') is False:
-        os.mkdir(f'../Чаты')
-    if os.path.exists(f'../Каналы') is False:
-        os.mkdir(f'../Каналы')
-    if os.path.exists(f'../{channel_type}/{title}') is False:
-        os.mkdir(f'../{channel_type}/{title}')
+# Получаем чат пользователя, проверяем, что за ссылку он отправил и ожидаем правильной ссылки
+while True:
+    link = input('Введите ссылку на чат: ')
+    res = check_link(link)
+    if not res:
+        print('Неверная ссылка. Попробуйте другую.')
+    elif res == 'url' or res == 'id':
+        if res == 'id':
+            res = loop.run_until_complete(check_chat(link, 'id'))
+        else:
+            res = loop.run_until_complete(check_chat(link, 'url'))
+        if res is not False and res['status'] == 'ok':
+            members = res['members']
+            admins = res['admins']
+            chat = res['ch']
+            users = res['users']
+            channel_type = res['channel_type']
+            channel_title = res['channel_title']
+            break
+        elif res is not False and res['status'] == 'error' and res['error_type'] == 'too_many_users':
+            chat = res['ch']
+            channel_type = res['channel_type']
+            channel_title = res['channel_title']
+            break
+    elif res == 'close':
+        chat = loop.run_until_complete(inv_chat(link))
+        res = loop.run_until_complete(check_chat(chat, 'url'))
+        if res is not False and res['status'] == 'ok':
+            members = res['members']
+            admins = res['admins']
+            chat = res['ch']
+            users = res['users']
+            channel_type = 'Чаты'
+            channel_title = chat.title
+            break
+        elif res is not False and res['status'] == 'error' and res['error_type'] == 'too_many_users':
+            chat = res['ch']
+            channel_type = 'Чаты'
+            channel_title = chat.title
+            break
+for x in ['\\', '|', '"', '/', ':',
+        '?', '*', '<', '>']:
+    title = channel_title.replace(x, ' ')
+if os.path.exists(f'../Чаты') is False:
+    os.mkdir(f'../Чаты')
+if os.path.exists(f'../Каналы') is False:
+    os.mkdir(f'../Каналы')
+if os.path.exists(f'../{channel_type}/{title}') is False:
+    os.mkdir(f'../{channel_type}/{title}')
+if res['status'] == 'ok':
     with open(f'../{channel_type}/{title}/Участники {title}.json', 'w', encoding='utf8') as f:
         with open(f'../{channel_type}/{title}/Участники {title}.txt', 'w', encoding='utf8') as file:
             all_users = {
@@ -114,22 +121,10 @@ try:
 
 
 
-    while True:
-        otvet = input('''\nЖелаете ли вы сохранить историю сообщений?
-    1 - да
-    2 - нет ''')
-        if str(otvet) == '1' or str(otvet) == '2':
-            break
-    if str(otvet) == '1':
-        loop.run_until_complete(dump_messages(chat, title))
-    input('\nСканирование закончено. Можете нажать "Enter", чтобы закрыть окно.')
-
-except Exception as e:
-    print(f'''Упс... Возникла ошибка
-Текст ошибки:
-
-{e}
-
-Отправьте скриншот разработчику.''')
-    raise e
-    input('\nНажмите "Enter", чтобы закрыть окно.')
+while True:
+    otvet = input('\nЖелаете ли вы сохранить историю сообщений?\n1 - да\n2 - нет ')
+    if str(otvet) == '1' or str(otvet) == '2':
+        break
+if str(otvet) == '1':
+    loop.run_until_complete(dump_messages(chat, title))
+input('\nСканирование закончено. Можете нажать "Enter", чтобы закрыть окно.')
