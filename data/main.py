@@ -53,16 +53,16 @@ while True:
             break
 for x in ['\\', '|', '"', '/', ':',
         '?', '*', '<', '>']:
-    title = channel_title.replace(x, ' ')
+    channel_title = channel_title.replace(x, ' ')
 if os.path.exists(f'../Чаты') is False:
     os.mkdir(f'../Чаты')
 if os.path.exists(f'../Каналы') is False:
     os.mkdir(f'../Каналы')
-if os.path.exists(f'../{channel_type}/{title}') is False:
-    os.mkdir(f'../{channel_type}/{title}')
+if os.path.exists(f'../{channel_type}/{channel_title}') is False:
+    os.mkdir(f'../{channel_type}/{channel_title}')
 if res['status'] == 'ok':
-    with open(f'../{channel_type}/{title}/Участники {title}.json', 'w', encoding='utf8') as f:
-        with open(f'../{channel_type}/{title}/Участники {title}.txt', 'w', encoding='utf8') as file:
+    with open(f'../{channel_type}/{channel_title}/Участники {channel_title}.json', 'w', encoding='utf8') as f:
+        with open(f'../{channel_type}/{channel_title}/Участники {channel_title}.txt', 'w', encoding='utf8') as file:
             all_users = {
                 'admins': admins,
                 'users': members
@@ -117,7 +117,7 @@ if res['status'] == 'ok':
             n_list += 1
             sheet1 = wb.add_sheet(f'Users_{n_list}"')
             n = 1
-    wb.save(f'../{channel_type}/{title}/Участники {title}.xls')
+    wb.save(f'../{channel_type}/{channel_title}/Участники {channel_title}.xls')
 
 
 
@@ -126,5 +126,5 @@ while True:
     if str(otvet) == '1' or str(otvet) == '2':
         break
 if str(otvet) == '1':
-    loop.run_until_complete(dump_messages(chat, title))
+    loop.run_until_complete(dump_messages(chat, channel_title))
 input('\nСканирование закончено. Можете нажать "Enter", чтобы закрыть окно.')
