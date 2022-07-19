@@ -11,6 +11,24 @@ api_hash = config.api_hash
 session = 'session.session'
 loop = asyncio.get_event_loop()
 
+def create_json_prettifier():
+
+    class Enc(json.JSONEncoder):
+
+        def default(self, o):
+            t = str(type(o))
+            if t == "<class 'datetime.datetime'>" or t == "<class 'bytes'>":
+                return str(o)
+            try:
+                return o.__dict__
+            except:
+                return t
+
+    return lambda data: json.dumps(data, indent=4, cls=Enc, ensure_ascii=False)
+
+
+json_prettifier = create_json_prettifier()
+
 # Получаем чат пользователя, проверяем, что за ссылку он отправил и ожидаем правильной ссылки
 while True:
     link = input('Введите ссылку на чат: ')
@@ -67,7 +85,7 @@ if res['status'] == 'ok':
                 'admins': admins,
                 'users': members
             }
-            f.write(json.dumps(all_users, indent=4, ensure_ascii=False,))
+            f.write(json_prettifier(all_users))
             if admins is not None:
                 file.write('Администраторы:\n')
                 for x in admins:
@@ -77,6 +95,8 @@ if res['status'] == 'ok':
                 for x in members:
                     file.write(f'{str(members[x])}\n')
     wb = Workbook()
+    date_format = xlwt.XFStyle()
+    date_format.num_format_str = 'dd.mm.yyyy hh:mm:ss'
     style = xlwt.easyxf('pattern: pattern solid, fore_colour light_blue;'
                         'font: colour white, bold True;')
     n_list = 1
@@ -90,6 +110,8 @@ if res['status'] == 'ok':
     sheet1.write(0, 6, 'Бот', style)
     sheet1.write(0, 7, 'Удалён', style)
     sheet1.write(0, 8, 'Скам', style)
+    sheet1.write(0, 9, 'Был онлайн', style)
+    sheet1.write(0, 10, 'Статус', style)
     n = 1
     q = 1
     for x in users:
@@ -102,6 +124,8 @@ if res['status'] == 'ok':
         sheet1.col(6).width = 256 * 7
         sheet1.col(7).width = 256 * 7
         sheet1.col(8).width = 256 * 7
+        sheet1.col(9).width = 256 * 25
+        sheet1.col(10).width = 256 * 17
         sheet1.write(n, 0, x['admin'])
         sheet1.write(n, 1, x['id'])
         sheet1.write(n, 2, x['first_name'])
@@ -111,6 +135,8 @@ if res['status'] == 'ok':
         sheet1.write(n, 6, x['bot'])
         sheet1.write(n, 7, x['deleted'])
         sheet1.write(n, 8, x['scam'])
+        sheet1.write(n, 9, x['was_online'], date_format)
+        sheet1.write(n, 10, x['status'])
         n += 1
         q += 1
         if n == 30000:

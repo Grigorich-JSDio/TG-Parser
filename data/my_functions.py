@@ -146,7 +146,7 @@ async def check_chat(chat, type_link):
                     user = {}
                     if admins is not None:
                         if str(members[x]['id']) in admins:
-                            user['admin'] = admins[str(members[x]['id'])]['title']
+                            user['admin'] = admins[str(members[x]['id'])]['title'] or 'Администратор'
                         else:
                             user['admin'] = ''
                     else:
@@ -177,6 +177,14 @@ async def check_chat(chat, type_link):
                         user['scam'] = ''
                     else:
                         user['scam'] = 'True'
+                    if members[x]['was_online'] is None:
+                        user['was_online'] = ''
+                    else:
+                        user['was_online'] = members[x]['was_online']
+                    if members[x]['status'] is None:
+                        user['status'] = ''
+                    else:
+                        user['status'] = members[x]['status']
                     users.append(user)
                 if channel_type != 'Каналы':
                     channel_title = ch.title
@@ -243,6 +251,15 @@ def list_users(*args):
             'bot': user.bot,
             'deleted': user.deleted,
             'scam': user.scam,
+            'was_online': user.status.was_online.replace(tzinfo=None) if hasattr(user.status, 'was_online') else None,
+            'status': {
+                'UserStatusEmpty': 'Пусто',
+                'UserStatusLastMonth': 'Месяц',
+                'UserStatusLastWeek': 'Неделя',
+                'UserStatusOffline': 'Офлайн',
+                'UserStatusOnline': 'Онлайн',
+                'UserStatusRecently': 'Недавно',
+            }.get(user.status.__class__.__name__, None)
         }
     if len(args) == 2:
         titles = args[1]
