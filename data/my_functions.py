@@ -177,6 +177,10 @@ async def check_chat(chat, type_link):
                         user['scam'] = ''
                     else:
                         user['scam'] = 'True'
+                    if members[x]['was_online'] is False:
+                        user['was_online'] = ''
+                    else:
+                        user['was_online'] = members[x]['was_online']
                     users.append(user)
                 if channel_type != 'Каналы':
                     channel_title = ch.title
@@ -243,6 +247,7 @@ def list_users(*args):
             'bot': user.bot,
             'deleted': user.deleted,
             'scam': user.scam,
+            'was_online': user.status.was_online.replace(tzinfo=None) if hasattr(user.status, 'was_online') else None,
         }
     if len(args) == 2:
         titles = args[1]
