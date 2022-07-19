@@ -111,6 +111,7 @@ if res['status'] == 'ok':
     sheet1.write(0, 7, 'Удалён', style)
     sheet1.write(0, 8, 'Скам', style)
     sheet1.write(0, 9, 'Был онлайн', style)
+    sheet1.write(0, 10, 'Статус', style)
     n = 1
     q = 1
     for x in users:
@@ -124,6 +125,7 @@ if res['status'] == 'ok':
         sheet1.col(7).width = 256 * 7
         sheet1.col(8).width = 256 * 7
         sheet1.col(9).width = 256 * 25
+        sheet1.col(10).width = 256 * 17
         sheet1.write(n, 0, x['admin'])
         sheet1.write(n, 1, x['id'])
         sheet1.write(n, 2, x['first_name'])
@@ -134,6 +136,7 @@ if res['status'] == 'ok':
         sheet1.write(n, 7, x['deleted'])
         sheet1.write(n, 8, x['scam'])
         sheet1.write(n, 9, x['was_online'], date_format)
+        sheet1.write(n, 10, x['status'])
         n += 1
         q += 1
         if n == 30000:
